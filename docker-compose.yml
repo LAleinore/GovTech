@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fireguard360_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fireguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fireguard_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-fireguard360}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fireguard} -d ${POSTGRES_DB:-fireguard360}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fireguard360_backend
+    restart: unless-stopped
+    command: sh -c "python -m alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      APP_NAME: "${APP_NAME:-FireGuard 360}"
+      APP_ENV: "${APP_ENV:-development}"
+      DEBUG: "${DEBUG:-true}"
+      DEMO_MODE: "${DEMO_MODE:-true}"
+      SECRET_KEY: "${SECRET_KEY:-fireguard-dev-insecure-secret-key-change-in-production-minimum-32-chars}"
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-fireguard}:${POSTGRES_PASSWORD:-fireguard_secret}@postgres:5432/${POSTGRES_DB:-fireguard360}"
+      SYNC_DATABASE_URL: "postgresql://${POSTGRES_USER:-fireguard}:${POSTGRES_PASSWORD:-fireguard_secret}@postgres:5432/${POSTGRES_DB:-fireguard360}"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local
+

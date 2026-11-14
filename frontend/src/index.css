@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light Engineering Base — Warm Mineral & Graphite */
+  --surface-canvas: #F5F4F0;
+  --surface-panel: #FFFFFF;
+  --surface-muted: #EBEAE5;
+  --surface-viewport: #17181A;
+
+  /* Precision Contours & Dividers */
+  --border-subtle: #DCDAD4;
+  --border-strong: #8C8A84;
+
+  /* Typography Hierarchy */
+  --text-primary: #181816;
+  --text-secondary: #5C5B56;
+  --text-muted: #8E8C84;
+
+  /* Signal & Brand Accents */
+  --brand-industrial: #D9531E;
+  --brand-industrial-hover: #BA4214;
+  --status-normal: #1F8844;
+  --status-warning: #D9822B;
+  --status-alarm: #C92A2A;
+  --status-fault: #687076;
+  --tag-demo: #3E506E;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--surface-canvas);
+  color: var(--text-primary);
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Architectural Technical Grid Background */
+.bg-engineering-grid {
+  background-image:
+    linear-gradient(to right, rgba(220, 218, 212, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(220, 218, 212, 0.45) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Tabular numbers for telemetry & coordinates */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sharp Technical Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}
+
