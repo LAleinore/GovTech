@@ -1,0 +1,15 @@
+{
+  "name": "FireGuard 360 Full Stack",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "forwardPorts": [8000, 5173],
+  "postCreateCommand": "cd backend && pip install -r requirements.txt && python seed.py --reset && cd ../frontend && npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import {
   Button,
@@ -23,6 +23,7 @@ import {
   SimulationControlBar,
   SimulationScenario,
 } from "./components/simulation/SimulationControlBar";
+import { FALLBACK_BUILDING, FALLBACK_SENSORS } from "./mockData";
 
 /* ============================================================================
  * UI SYSTEM REFERENCE PAGE ("/ui-system")
@@ -168,10 +169,12 @@ export const App: React.FC = () => {
       }
 
       setApiConnected(true);
-    } catch (err: unknown) {
+    } catch {
+      // In offline / static GitHub Pages mode: fall back gracefully to architectural demo data
       setApiConnected(false);
-      const msg = err instanceof Error ? err.message : "Ошибка обмена данными с backend API";
-      setError(msg);
+      setBuilding((prev) => prev || FALLBACK_BUILDING);
+      setSensors((prev) => (prev && prev.length > 0 ? prev : FALLBACK_SENSORS));
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -211,7 +214,7 @@ export const App: React.FC = () => {
 
         ws.onclose = () => {
           setWsConnected(false);
-          reconnectTimeout = setTimeout(connectWs, 3000);
+          reconnectTimeout = setTimeout(connectWs, 5000);
         };
 
         ws.onerror = () => {
@@ -231,6 +234,7 @@ export const App: React.FC = () => {
   }, [fetchSystemData]);
 
   const handleTriggerScenario = async (scenario: SimulationScenario) => {
+    setCurrentScenario(scenario);
     try {
       const res = await fetch("/api/v1/simulation/scenario", {
         method: "POST",
@@ -238,16 +242,39 @@ export const App: React.FC = () => {
         body: JSON.stringify({ scenario }),
       });
       if (res.ok) {
-        setCurrentScenario(scenario);
         await fetchSystemData();
+        return;
       }
     } catch {
-      await fetchSystemData();
+      // Offline fallback: client-side simulation mutations
     }
+
+    // Client-side scenario handler for GitHub Pages demo mode
+    setSensors((prev) => {
+      const list = prev && prev.length > 0 ? [...prev] : [...FALLBACK_SENSORS];
+      return list.map((s) => {
+        if (scenario === "NORMAL") {
+          return { ...s, status: "NORMAL" };
+        }
+        if (scenario === "FIRE_ALARM" && (s.code.includes("HEAT") || s.code.includes("201"))) {
+          return { ...s, status: "ALARM" };
+        }
+        if (scenario === "SMOKE" && (s.code.includes("SMK") || s.code.includes("101"))) {
+          return { ...s, status: "WARNING" };
+        }
+        if (scenario === "TEMP_WARNING" && s.code.includes("HEAT")) {
+          return { ...s, status: "WARNING" };
+        }
+        if (scenario === "DEVICE_OFFLINE" && s.code.includes("GAS")) {
+          return { ...s, status: "OFFLINE" };
+        }
+        return s;
+      });
+    });
   };
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route
           element={
@@ -321,7 +348,7 @@ export const App: React.FC = () => {
           <Route path="/ui-system" element={<DesignSystemPage />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
